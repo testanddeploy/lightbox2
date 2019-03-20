@@ -453,6 +453,13 @@
         switch (orientation) {
           case 6:
             degrees = 90;
+            break;
+          case 3:
+            degrees = 180;
+            break;
+          case 8:
+            degrees = 270;
+            break;
         }
         return degrees;
       }
