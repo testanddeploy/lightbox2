@@ -198,6 +198,8 @@
         var $preloader, imageHeight, imageWidth, maxImageHeight, maxImageWidth, windowHeight, windowWidth;
         $image.attr('src', self.album[imageNumber].link);
 
+        self.fixOrientation(preloader);
+
         $preloader = $(preloader);
 
         $image.width(preloader.width);
@@ -397,6 +399,68 @@
       $('select, object, embed').css({
         visibility: "visible"
       });
+    };
+
+    // Special orientation logic to exif photos
+    Lightbox.prototype.getOrientation = function(imageUrl, callback) {
+      var reader = new FileReader();
+
+      reader.onload = function(event) {
+        let view = new DataView(event.target.result);
+
+        if (view.getUint16(0, false) != 0xFFD8) return callback(-2);
+
+        var length = view.byteLength,
+            offset = 2;
+
+        while (offset < length) {
+          var marker = view.getUint16(offset, false);
+          offset += 2;
+
+          if (marker == 0xFFE1) {
+            if (view.getUint32(offset += 2, false) != 0x45786966) {
+              return callback(-1);
+            }
+            var little = view.getUint16(offset += 6, false) == 0x4949;
+            offset += view.getUint32(offset + 4, little);
+            var tags = view.getUint16(offset, little);
+            offset += 2;
+
+            for (var i = 0; i < tags; i++)
+              if (view.getUint16(offset + (i * 12), little) == 0x0112)
+                return callback(view.getUint16(offset + (i * 12) + 8, little));
+          }
+          else if ((marker & 0xFF00) != 0xFF00) break;
+          else offset += view.getUint16(offset, false);
+        }
+        return callback(-1);
+      };
+
+      var xhr = new XMLHttpRequest();
+      xhr.open( "GET", imageUrl, true );
+      xhr.responseType = "arraybuffer";
+      xhr.onload = function() {
+        let arrayBufferView = new Uint8Array(this.response);
+        let blob = new Blob([arrayBufferView], {type: "image/jpeg"});
+        reader.readAsArrayBuffer(blob);
+      };
+      xhr.send();
+    };
+
+    Lightbox.prototype.fixOrientation = function(image) {
+      function getDegreesFromOrientation(orientation) {
+        var degrees = 0;
+        switch (orientation) {
+          case 6:
+            degrees = 90;
+        }
+        return degrees;
+      }
+      this.getOrientation(image.src, function (orientation) {
+        console.log('Fixing lighbox orientation to EXIF(' + orientation + ')');
+        let degrees = getDegreesFromOrientation(orientation);
+        $('div.lb-outerContainer').css('transform', 'rotate(' + degrees + 'deg)');
+      })
     };
 
     return Lightbox;
