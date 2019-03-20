@@ -467,6 +467,7 @@
         console.log('Fixing lighbox orientation to EXIF(' + orientation + ')');
         let degrees = getDegreesFromOrientation(orientation);
         $('div.lb-outerContainer').css('transform', 'rotate(' + degrees + 'deg)');
+        $('div.lb-dataContainer').css('padding-top', '55px');
       })
     };
 
