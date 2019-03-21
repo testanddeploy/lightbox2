@@ -479,6 +479,7 @@
         var degrees = getDegreesFromOrientation(orientation);
         $('div.lb-outerContainer').css('transform', 'rotate(' + degrees + 'deg)');
         $('div.lb-dataContainer').css('padding-top', '55px');
+        $('div.lb-nav').css('transform', 'rotate(-' + degrees + 'deg)');
       });
     };
 
